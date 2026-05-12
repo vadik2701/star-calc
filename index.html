@@ -1,224 +1,241 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="uk">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Завантаження машини</title>
-  <meta name="theme-color" content="#111827" />
-  <link rel="manifest" href="manifest.webmanifest" />
-  <link rel="apple-touch-icon" href="icons/icon-192.png" />
-  <style>
-    :root {
-      --bg: #f5f7fb; --card: #ffffff; --text: #1f2937; --muted: #6b7280; --line: #d1d5db;
-      --washer: #93c5fd; --fridge: #fca5a5; --ok: #166534; --warn: #b45309; --bad: #b91c1c;
-    }
-    * { box-sizing: border-box; }
-    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background: var(--bg); color: var(--text); }
-    .wrap { max-width: 1100px; margin: 0 auto; padding: 16px; }
-    h1 { font-size: 28px; margin: 0 0 8px; }
-    p.sub { margin: 0 0 18px; color: var(--muted); }
-    .grid { display: grid; grid-template-columns: 360px 1fr; gap: 16px; }
-    .card { background: var(--card); border-radius: 16px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
-    .section-title { font-weight: 700; margin: 0 0 12px; font-size: 18px; }
-    .row { display: grid; grid-template-columns: 1fr 90px; gap: 10px; margin-bottom: 10px; align-items: center; }
-    .row3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 10px; }
-    label { display: block; font-size: 14px; margin-bottom: 6px; color: var(--muted); }
-    input { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; font-size: 16px; background: #fff; }
-    button { width: 100%; padding: 12px 14px; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; background: #111827; color: white; margin-top: 8px; }
-    .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 14px; }
-    .stat { border: 1px solid var(--line); border-radius: 12px; padding: 12px; background: #fff; }
-    .stat .k { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
-    .stat .v { font-size: 20px; font-weight: 800; }
-    .legend { display: flex; gap: 16px; flex-wrap: wrap; margin: 10px 0 8px; font-size: 14px; }
-    .dot { display: inline-block; width: 14px; height: 14px; border-radius: 4px; margin-right: 6px; vertical-align: -2px; border: 1px solid rgba(0,0,0,0.15); }
-    .canvas-wrap { border: 1px solid var(--line); border-radius: 14px; padding: 12px; background: #fff; overflow: auto; }
-    canvas { display: block; max-width: 100%; background: #fafafa; border-radius: 10px; }
-    .message { margin-top: 10px; padding: 12px; border-radius: 12px; font-size: 15px; line-height: 1.35; background: #f8fafc; border: 1px solid var(--line); }
-    .ok { color: var(--ok); } .warn { color: var(--warn); } .bad { color: var(--bad); }
-    .small { color: var(--muted); font-size: 13px; margin-top: 8px; }
-    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
-  </style>
-</head>
-<body>
-  <div class="wrap">
-    <h1>Калькулятор завантаження машини</h1>
-    <p class="sub">Введи кількість техніки та розміри. Програма порахує об’єм і покаже схему, як це може стояти в кузові.</p>
-    <div class="grid">
-      <div class="card">
-        <div class="section-title">Техніка</div>
-        <div class="row">
-          <div><label for="washers">Кількість пралок</label><input id="washers" type="number" min="0" value="10" /></div>
-          <div><label for="fridges">Кількість холодильників</label><input id="fridges" type="number" min="0" value="10" /></div>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0f766e" />
+    <title>Статистика доставок</title>
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="icon.svg" />
+    <link rel="stylesheet" href="styles.css?v=4" />
+  </head>
+  <body>
+    <main class="app">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Журнал рейсів</p>
+          <h1>Статистика доставок</h1>
         </div>
-        <div class="section-title" style="margin-top:16px;">Середні розміри пралки (м)</div>
-        <div class="row3">
-          <div><label for="wW">Ширина</label><input id="wW" type="number" step="0.01" value="0.60"></div>
-          <div><label for="wD">Глибина</label><input id="wD" type="number" step="0.01" value="0.60"></div>
-          <div><label for="wH">Висота</label><input id="wH" type="number" step="0.01" value="0.85"></div>
+        <div class="actions">
+          <button class="ghost-button" id="exportCsv" type="button" title="Експорт CSV">CSV</button>
+          <button class="danger-button" id="clearAll" type="button" title="Очистити всі записи">Очистити</button>
         </div>
-        <div class="section-title" style="margin-top:16px;">Середні розміри холодильника (м)</div>
-        <div class="row3">
-          <div><label for="fW">Ширина</label><input id="fW" type="number" step="0.01" value="0.60"></div>
-          <div><label for="fD">Глибина</label><input id="fD" type="number" step="0.01" value="0.60"></div>
-          <div><label for="fH">Висота</label><input id="fH" type="number" step="0.01" value="1.80"></div>
-        </div>
-        <div class="section-title" style="margin-top:16px;">Внутрішній розмір машини (м)</div>
-        <div class="row3">
-          <div><label for="vL">Довжина</label><input id="vL" type="number" step="0.1" value="4.2"></div>
-          <div><label for="vW">Ширина</label><input id="vW" type="number" step="0.1" value="2.1"></div>
-          <div><label for="vH">Висота</label><input id="vH" type="number" step="0.1" value="2.2"></div>
-        </div>
-        <button id="calcBtn">Порахувати і намалювати</button>
-        <div class="small">Пралки рахуються стосами по висоті. Зліва біля схеми показуються ряди: 1 ряд, 2 ряд, 3 ряд.</div>
-      </div>
-      <div class="card">
-        <div class="section-title">Результат</div>
-        <div class="stats">
-          <div class="stat"><div class="k">Об’єм техніки</div><div class="v" id="itemsVol">0 м³</div></div>
-          <div class="stat"><div class="k">Об’єм машини</div><div class="v" id="vanVol">0 м³</div></div>
-          <div class="stat"><div class="k">Заповнення</div><div class="v" id="fillPct">0%</div></div>
-          <div class="stat"><div class="k">Поміщається</div><div class="v" id="fitCount">0 / 0</div></div>
-        </div>
-        <div class="legend">
-          <div><span class="dot" style="background: var(--washer)"></span>Пралка / стос пралок</div>
-          <div><span class="dot" style="background: var(--fridge)"></span>Холодильник</div>
-          <div><span class="dot" style="background: #e5e7eb"></span>Вільне місце</div>
-        </div>
-        <div class="canvas-wrap"><canvas id="plan" width="760" height="500"></canvas></div>
-        <div id="message" class="message">Заповни дані та натисни кнопку.</div>
-      </div>
-    </div>
-  </div>
-  <script>
-    const $ = (id) => document.getElementById(id);
-    function num(id) { return parseFloat($(id).value) || 0; }
-    function round2(n) { return Math.round(n * 100) / 100; }
-    function fmt(n) { return round2(n).toFixed(2).replace('.', ','); }
+      </header>
 
-    function buildItems() {
-      const washers = Math.max(0, Math.floor(num('washers')));
-      const fridges = Math.max(0, Math.floor(num('fridges')));
-      const vanH = num('vH');
-      const washerH = num('wH');
-      const fridgeColor = getComputedStyle(document.documentElement).getPropertyValue('--fridge').trim();
-      const washerColor = getComputedStyle(document.documentElement).getPropertyValue('--washer').trim();
-      const items = [];
-      const washerStackMax = washerH > 0 ? Math.max(0, Math.floor(vanH / washerH)) : 0;
+      <section class="summary-grid" aria-label="Підсумки">
+        <article class="metric">
+          <span>Рейсів</span>
+          <strong id="totalTrips">0</strong>
+        </article>
+        <article class="metric">
+          <span>Доставок</span>
+          <strong id="totalDeliveries">0</strong>
+        </article>
+        <article class="metric">
+          <span>Кілометрів</span>
+          <strong id="totalKm">0 км</strong>
+        </article>
+        <article class="metric">
+          <span>Сума</span>
+          <strong id="totalMoney">0 грн</strong>
+        </article>
+      </section>
 
-      for (let i = 0; i < fridges; i++) {
-        items.push({ type: 'fridge', label: 'Х', units: 1, w: num('fW'), d: num('fD'), h: num('fH'), color: fridgeColor });
+      <section class="workspace">
+        <form class="entry-form" id="tripForm">
+          <div class="form-head">
+            <div>
+              <h2 id="formTitle">Новий рейс</h2>
+              <p id="formHint">Дані зберігаються у цьому браузері.</p>
+            </div>
+            <span id="liveCalc">0 км | 0 грн</span>
+          </div>
+
+          <label>
+            Дата
+            <input id="date" name="date" type="date" required />
+          </label>
+
+          <label>
+            Водій
+            <select id="driver" name="driver" required></select>
+          </label>
+
+          <label>
+            Авто
+            <select id="vehicle" name="vehicle" required></select>
+          </label>
+
+          <label>
+            Магазин
+            <select id="store" name="store" required></select>
+          </label>
+
+          <div class="split">
+            <label>
+              Км на старті
+              <input id="kmStart" name="kmStart" type="text" inputmode="numeric" pattern="[0-9]*" required />
+            </label>
+            <label>
+              Км в кінці
+              <input id="kmEnd" name="kmEnd" type="text" inputmode="numeric" pattern="[0-9]*" required />
+            </label>
+          </div>
+
+          <div class="split">
+            <label>
+              Доставок
+              <input id="deliveries" name="deliveries" type="text" inputmode="numeric" pattern="[0-9]*" required />
+            </label>
+            <label>
+              Ціна за доставку
+              <input id="rate" name="rate" type="text" inputmode="numeric" pattern="[0-9]*" value="700" required />
+            </label>
+          </div>
+
+          <label>
+            Нотатка
+            <input id="note" name="note" type="text" placeholder="Необов'язково" />
+          </label>
+
+          <div class="form-actions">
+            <button class="primary-button" id="submitButton" type="submit">Додати рейс</button>
+            <button class="ghost-button is-hidden" id="cancelEdit" type="button">Скасувати</button>
+          </div>
+        </form>
+
+        <section class="table-panel">
+          <div class="filters">
+            <label>
+              Пошук
+              <input id="search" type="search" placeholder="Водій, авто або магазин" />
+            </label>
+            <label>
+              Місяць
+              <input id="monthFilter" type="month" />
+            </label>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Дата</th>
+                  <th>Водій</th>
+                  <th>Авто</th>
+                  <th>Магазин</th>
+                  <th>Старт</th>
+                  <th>Кінець</th>
+                  <th>Км</th>
+                  <th>Доставок</th>
+                  <th>Сума</th>
+                  <th>Дії</th>
+                </tr>
+              </thead>
+              <tbody id="tripRows"></tbody>
+            </table>
+          </div>
+
+          <div class="empty-state" id="emptyState">
+            <strong>Записів ще немає</strong>
+            <span>Додайте перший рейс або змініть фільтр.</span>
+          </div>
+        </section>
+      </section>
+
+      <section class="reports" aria-label="Звіти">
+        <article class="report-panel">
+          <div class="report-head">
+            <h2>По водіях</h2>
+            <span id="driverReportCount">0</span>
+          </div>
+          <div id="driverReport" class="report-list"></div>
+        </article>
+
+        <article class="report-panel">
+          <div class="report-head">
+            <h2>По магазинах</h2>
+            <span id="storeReportCount">0</span>
+          </div>
+          <div id="storeReport" class="report-list"></div>
+        </article>
+
+        <article class="report-panel">
+          <div class="report-head">
+            <h2>По авто</h2>
+            <span id="vehicleReportCount">0</span>
+          </div>
+          <div id="vehicleReport" class="report-list"></div>
+        </article>
+      </section>
+
+      <section class="directories" aria-label="Довідники">
+        <article class="directory-panel">
+          <div class="directory-head">
+            <h2>Водії</h2>
+            <span id="driversCount">0</span>
+          </div>
+          <form class="directory-form" id="driverDirectoryForm">
+            <input id="driverName" type="text" placeholder="Новий водій" required />
+            <button class="primary-button" type="submit">Додати</button>
+          </form>
+          <div id="driversList" class="directory-list"></div>
+        </article>
+
+        <article class="directory-panel">
+          <div class="directory-head">
+            <h2>Авто</h2>
+            <span id="vehiclesCount">0</span>
+          </div>
+          <form class="directory-form" id="vehicleDirectoryForm">
+            <input id="vehicleName" type="text" placeholder="Наприклад: Renault Kangoo AA1234AA" required />
+            <button class="primary-button" type="submit">Додати</button>
+          </form>
+          <div id="vehiclesList" class="directory-list"></div>
+        </article>
+
+        <article class="directory-panel">
+          <div class="directory-head">
+            <h2>Магазини</h2>
+            <span id="storesCount">0</span>
+          </div>
+          <form class="directory-form" id="storeDirectoryForm">
+            <input id="storeName" type="text" placeholder="Наприклад: Сільпо Оболонь" required />
+            <button class="primary-button" type="submit">Додати</button>
+          </form>
+          <div id="storesList" class="directory-list"></div>
+        </article>
+      </section>
+    </main>
+
+    <template id="rowTemplate">
+      <tr>
+        <td data-label="Дата"></td>
+        <td data-label="Водій"></td>
+        <td data-label="Авто"></td>
+        <td data-label="Магазин"></td>
+        <td data-label="Старт"></td>
+        <td data-label="Кінець"></td>
+        <td data-label="Км"></td>
+        <td data-label="Доставок"></td>
+        <td data-label="Сума"></td>
+        <td data-label="Дії">
+          <div class="row-actions">
+            <button class="small-button edit-row" type="button" title="Редагувати">Ред.</button>
+            <button class="small-button delete-row" type="button" title="Видалити">×</button>
+          </div>
+        </td>
+      </tr>
+    </template>
+
+    <script src="app.js?v=4"></script>
+    <script>
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker.register("service-worker.js");
+        });
       }
-      if (washerStackMax > 0) {
-        let left = washers;
-        while (left > 0) {
-          const stackUnits = Math.min(washerStackMax, left);
-          items.push({ type: 'washer', label: stackUnits > 1 ? 'П×' + stackUnits : 'П', units: stackUnits, w: num('wW'), d: num('wD'), h: washerH * stackUnits, color: washerColor });
-          left -= stackUnits;
-        }
-      }
-      return { items, washerStackMax };
-    }
-
-    function packRows(items, vanW, vanL) {
-      const placed = [];
-      let x = 0, y = 0, rowDepth = 0, rowIndex = 1;
-      for (const item of items) {
-        let iw = item.w, id = item.d, rotated = false;
-        if (iw > vanW && id <= vanW) { const tmp = iw; iw = id; id = tmp; rotated = true; }
-        if (x + iw > vanW) { x = 0; y += rowDepth; rowDepth = 0; rowIndex += 1; }
-        if (y + id > vanL) break;
-        placed.push({ ...item, x, y, w: iw, d: id, rotated, row: rowIndex });
-        x += iw;
-        rowDepth = Math.max(rowDepth, id);
-      }
-      return placed;
-    }
-
-    function draw(placed, totalUnits, placedUnits, vanW, vanL) {
-      const canvas = $('plan');
-      const ctx = canvas.getContext('2d');
-      const padTop = 28, padRight = 24, padBottom = 36, padLeft = 90;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const scale = Math.min((canvas.width - padLeft - padRight) / vanW, (canvas.height - padTop - padBottom) / vanL);
-      const boxW = vanW * scale, boxH = vanL * scale, ox = padLeft, oy = padTop;
-
-      ctx.fillStyle = '#f3f4f6'; ctx.fillRect(ox, oy, boxW, boxH);
-      ctx.strokeStyle = '#111827'; ctx.lineWidth = 2; ctx.strokeRect(ox, oy, boxW, boxH);
-      ctx.fillStyle = '#111827'; ctx.font = '14px system-ui'; ctx.fillText('Кабіна / перед машини', ox + 8, oy - 8);
-
-      const rowPositions = new Map();
-      for (const p of placed) if (!rowPositions.has(p.row)) rowPositions.set(p.row, p.y);
-      for (const [rowNum, rowY] of rowPositions.entries()) {
-        const textY = oy + rowY * scale + 20;
-        ctx.fillStyle = '#111827'; ctx.font = 'bold 14px system-ui'; ctx.fillText(rowNum + ' ряд', 18, textY);
-      }
-
-      for (const p of placed) {
-        const rx = ox + p.x * scale, ry = oy + p.y * scale, rw = p.w * scale, rh = p.d * scale;
-        ctx.fillStyle = p.color; ctx.fillRect(rx, ry, rw, rh);
-        ctx.strokeStyle = 'rgba(17,24,39,0.35)'; ctx.lineWidth = 1; ctx.strokeRect(rx, ry, rw, rh);
-        ctx.fillStyle = '#111827'; ctx.font = 'bold 13px system-ui'; ctx.fillText(p.label, rx + 6, ry + 18);
-      }
-
-      ctx.fillStyle = placedUnits < totalUnits ? '#b91c1c' : '#166534';
-      ctx.font = 'bold 16px system-ui';
-      ctx.fillText(placedUnits < totalUnits ? 'Не все помістилось на схему' : 'Схема побудована успішно', ox + 10, oy + boxH + 24);
-    }
-
-    function calculate() {
-      const vanL = num('vL'), vanW = num('vW'), vanH = num('vH');
-      const washers = Math.max(0, Math.floor(num('washers')));
-      const fridges = Math.max(0, Math.floor(num('fridges')));
-      const totalUnits = washers + fridges;
-
-      const washerVol = num('wW') * num('wD') * num('wH');
-      const fridgeVol = num('fW') * num('fD') * num('fH');
-      const itemsVol = washers * washerVol + fridges * fridgeVol;
-      const vanVol = vanL * vanW * vanH;
-      const fillPct = vanVol > 0 ? (itemsVol / vanVol) * 100 : 0;
-
-      const tooTallWashers = num('wH') > vanH;
-      const tooTallFridges = num('fH') > vanH;
-
-      const built = buildItems();
-      const items = built.items, washerStackMax = built.washerStackMax;
-      const placed = packRows(items, vanW, vanL);
-      const placedUnits = placed.reduce((sum, item) => sum + (item.units || 1), 0);
-      const rowsUsed = placed.length ? Math.max(...placed.map(p => p.row)) : 0;
-
-      $('itemsVol').textContent = fmt(itemsVol) + ' м³';
-      $('vanVol').textContent = fmt(vanVol) + ' м³';
-      $('fillPct').textContent = round2(fillPct) + '%';
-      $('fitCount').textContent = placedUnits + ' / ' + totalUnits;
-      draw(placed, totalUnits, placedUnits, vanW, vanL);
-
-      let msg = '', cls = 'ok';
-      if (vanL <= 0 || vanW <= 0 || vanH <= 0) { msg = 'Введи нормальні внутрішні розміри машини.'; cls = 'bad'; }
-      else if (tooTallWashers || tooTallFridges) {
-        const probs = [];
-        if (tooTallWashers) probs.push('пралка вища за кузов');
-        if (tooTallFridges) probs.push('холодильник вищий за кузов');
-        msg = 'Є проблема: ' + probs.join(', ') + '.';
-        cls = 'bad';
-      } else if (washerStackMax < 1 && washers > 0) { msg = 'Пралки не можна поставити в кузов по висоті.'; cls = 'bad'; }
-      else if (placedUnits < totalUnits) {
-        msg = 'Пралки рахуються стосами до ' + washerStackMax + ' шт одна на одній. На схемі помістилось ' + placedUnits + ' з ' + totalUnits + ' одиниць. Рядів зайнято: ' + rowsUsed + '.';
-        cls = 'warn';
-      } else {
-        msg = 'У спрощеній схемі все поміщається. Пралки рахуються стосами до ' + washerStackMax + ' шт одна на одній. Рядів зайнято: ' + rowsUsed + '. Заповнення машини приблизно ' + round2(fillPct) + '%.';
-        cls = 'ok';
-      }
-      const box = $('message');
-      box.className = 'message ' + cls;
-      box.textContent = msg;
-    }
-
-    $('calcBtn').addEventListener('click', calculate);
-    ['washers','fridges','wW','wD','wH','fW','fD','fH','vL','vW','vH'].forEach(id => $(id).addEventListener('input', calculate));
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
-    }
-    calculate();
-  </script>
-</body>
+    </script>
+  </body>
 </html>
